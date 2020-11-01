@@ -1,0 +1,200 @@
+<!doctype html>
+<head>
+	<meta charset="utf-8">
+	<title></title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+	<body>
+		<center><textarea id="log"> </textarea></center>
+		<center><canvas id="canvas" width="1100" height="600"></canvas></center>
+		<script src="utils.js"></script>
+		<script src="ball.js"></script>
+		<script src="bar.js"></script>
+		<script src="line.js"></script>
+		<script src="barred.js"></script>
+		<script src="fan.js"></script>
+		<script src="background.js"></script>
+		<script>
+
+			window.onload = function() {
+
+				var canvas = document.getElementById("canvas");
+				var context = canvas.getContext('2d');
+				var log = document.getElementById('log');
+				var ball = new Ball(40, "pink");
+				var barred = new Barred();
+				var background = new Back();
+
+				var fan = new Fan(); 
+				var powerUp = 0, fanRotation = 0.01;
+				var bar;
+
+				var line = new Line();
+				var dif = [ball.radius, ball.radius+canvas.width/2, ball.radius+canvas.width];
+
+				var oldScore = 0;
+	
+				var start = false, gameOver = false, flag = false;
+
+				var score=0;
+				var numArray = 3;
+				var array = [];
+				var randSize = [-70, -120, -170]; 
+
+				var vx = 0;
+				var jump = 0;
+				var gravity = 0;
+
+				var bottom = canvas.height;
+				line.x = 0
+				line.y = bottom-ball.radius;
+
+
+				for(var i=0; i<numArray; i++) {
+
+					bar = new Bar(randSize[Math.round(Math.random()*2)]);
+					bar.id = "bar: "+i;
+					bar.x = canvas.width+dif[i];
+					bar.y = canvas.height - (ball.radius);
+					array.push(bar);
+
+				}
+
+				ball.x = ball.radius * 2; 
+				ball.y = canvas.height - ball.radius*2;
+
+				barred.x = canvas.width/2;
+				barred.y = (canvas.height/2)-40;
+
+				fan.x = canvas.width/2;
+				fan.y = canvas.height/2-70;
+
+				background.x = canvas.width/2;
+				background.y = canvas.height/2;
+
+				window.addEventListener('keydown',function(event) {
+					if(!gameOver)
+					{
+						switch(event.keyCode) {
+
+							case 38:
+								if(jump == 0)
+									jump = -35;
+
+								if(!flag) {
+
+									vx = - 7;
+									flag = true;
+								}
+								start = true;
+
+							break;
+						}
+					}
+
+				},false);
+
+
+				
+				function checkIfContains(bar) {
+
+						if(utils.intersects(ball.getBounds(),bar.getBounds())) {
+								gameOver = true;
+								log.value = "Game Over\nFinal Score:"+score;
+            			}
+            		
+				}
+
+				function checkBoundaries(bar) {
+
+						if(bar.x < 0) {
+							log.value = "Score:"+(++score);
+							bar.size = randSize[Math.round(Math.random()*2)];
+							bar.x = canvas.width+canvas.width/2;
+
+						}
+						else {
+							bar.x += vx;
+						}
+			
+
+				}
+
+				function draw(bar) {
+
+						bar.draw(context);
+    
+				}
+
+				(function drawFrame(){
+					window.requestAnimationFrame(drawFrame,canvas);
+					context.clearRect(0,0,canvas.width,canvas.height);
+
+					fan.rotation += fanRotation;
+					background.draw(context);
+					barred.draw(context);
+					fan.draw(context);
+
+					if(!gameOver)
+					{
+						if(!(ball.y+ball.radius*2 >= bottom)) {
+							
+							if(jump != 0)
+							{
+								jump++;	
+							}
+
+							gravity++;
+						}
+						else {
+
+							gravity = 0;
+						}
+
+						if(start) {
+
+							array.forEach(checkIfContains);
+						}
+						
+						array.forEach(checkBoundaries);
+
+						ball.y += gravity;
+						ball.y += jump;
+					}
+					
+					if(oldScore+5 < score) {
+						
+						vx-=.3;
+						oldScore = score;
+					}
+
+					if(ball.y+ball.radius > line.y) {
+
+						ball.y = line.y - ball.radius;
+					}
+					else {
+
+						ball.y += .5;
+					}
+
+					if(powerUp%500==0 && score != 0) {
+
+						ball.radius+=5;
+						fanRotation *= -1;
+					}
+
+					powerUp++;
+					
+					ball.draw(context);
+					array.forEach(draw);
+					line.draw(context);
+
+
+				}());
+			};
+
+		</script>
+
+	</body>
+
+</html>
